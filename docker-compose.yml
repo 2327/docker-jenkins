@@ -1,0 +1,41 @@
+version: '2'
+
+services:
+  jenkins:
+    image: jenkins:lts
+ #   image: jenkins:docker
+    container_name: jenkins
+    expose:
+      - 8080
+    labels:
+      - "traefik.frontend.entryPoints=https"
+      - "traefik.docker.network=traefik"
+      - "traefik.frontend.rule=Host:jenkins.DOMAIN"
+      - "traefik.enable=true"
+#      - "traefik.frontend.auth.basic=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/"
+    volumes:
+      - /usr/local/bin/docker-compose:/usr/bin/docker-compose
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/makky/jenkins/data:/var/jenkins_home
+      - ./jenkins.war:/usr/share/jenkins/jenkins.war:ro
+    networks:
+      - traefik
+    logging:
+      driver: "gelf"
+      options:
+        gelf-address: "udp://GRAYLOG:12201"
+        tag: "jenkins"
+    user: jenkins
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 1024M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+networks:
+  traefik:
+    external: true
+
